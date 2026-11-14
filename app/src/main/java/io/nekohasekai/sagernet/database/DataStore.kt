@@ -168,6 +168,8 @@ object DataStore : OnPreferenceDataStoreChangeListener {
 
     var globalAllowInsecure by configurationStore.boolean(Key.GLOBAL_ALLOW_INSECURE) { false }
 
+    var globalHttpCusHX by configurationStore.string(Key.GLOBAL_HTTP_CUS_HX) { "" }
+
     // old cache, DO NOT ADD
 
     var dirty by profileCacheStore.boolean(Key.PROFILE_DIRTY)

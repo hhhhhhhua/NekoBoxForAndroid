@@ -55,6 +55,7 @@ object Key {
 
     // Protocol Settings
     const val GLOBAL_ALLOW_INSECURE = "globalAllowInsecure"
+    const val GLOBAL_HTTP_CUS_HX = "globalHttpCusHX"
 
     const val ACQUIRE_WAKE_LOCK = "acquireWakeLock"
     const val SHOW_BOTTOM_BAR = "showBottomBar"

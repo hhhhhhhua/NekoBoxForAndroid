@@ -65,6 +65,7 @@ class SettingsPreferenceFragment : PreferenceFragmentCompat() {
         val serviceMode = findPreference<Preference>(Key.SERVICE_MODE)!!
         val allowAccess = findPreference<Preference>(Key.ALLOW_ACCESS)!!
         val appendHttpProxy = findPreference<SwitchPreference>(Key.APPEND_HTTP_PROXY)!!
+        val globalHttpCusHX = findPreference<EditTextPreference>(Key.GLOBAL_HTTP_CUS_HX)!!
 
         val showDirectSpeed = findPreference<SwitchPreference>(Key.SHOW_DIRECT_SPEED)!!
         val ipv6Mode = findPreference<Preference>(Key.IPV6_MODE)!!
@@ -168,6 +169,7 @@ class SettingsPreferenceFragment : PreferenceFragmentCompat() {
         tunImplementation.onPreferenceChangeListener = reloadListener
         acquireWakeLock.onPreferenceChangeListener = reloadListener
         globalCustomConfig.onPreferenceChangeListener = reloadListener
+        globalHttpCusHX.onPreferenceChangeListener = reloadListener
     }
 
     override fun onResume() {

@@ -1,6 +1,7 @@
 package io.nekohasekai.sagernet.fmt
 
 import android.widget.Toast
+import com.google.gson.JsonParser
 import io.nekohasekai.sagernet.*
 import io.nekohasekai.sagernet.bg.VpnService
 import io.nekohasekai.sagernet.database.DataStore
@@ -401,7 +402,20 @@ fun buildConfig(
 
                     _hack_config_map["tag"] = tagOut
 
-                    _hack_custom_config = bean.customOutboundJson
+                    val customOutboundJson = bean.customOutboundJson
+                    val outboundMap = asMap()
+                    val currentCusHX = outboundMap["cus_hx"] as? String
+                    if (outboundMap["type"] == "http" &&
+                        customOutboundJson.findJsonValue("cus_hx").isNullOrBlank() &&
+                        currentCusHX.isNullOrBlank()
+                    ) {
+                        val globalCusHX = DataStore.globalHttpCusHX
+                        if (globalCusHX.isNotBlank()) {
+                            _hack_config_map["cus_hx"] = globalCusHX
+                        }
+                    }
+
+                    _hack_custom_config = customOutboundJson.removeBlankJsonValue("cus_hx")
                 }
 
                 // External proxy need a dokodemo-door inbound to forward the traffic
@@ -752,4 +766,34 @@ fun buildConfig(
         )
     }
 
+}
+
+// Read a top-level string field from a custom JSON fragment, null if absent or unparsable.
+private fun String.findJsonValue(key: String): String? {
+    if (isBlank()) return null
+    return try {
+        JsonParser.parseString(this).takeIf { it.isJsonObject }
+            ?.asJsonObject?.get(key)?.takeIf { it.isJsonPrimitive }?.asString
+    } catch (_: Exception) {
+        null
+    }
+}
+
+// Remove a blank field so the generated global fallback is not overwritten.
+private fun String.removeBlankJsonValue(key: String): String {
+    if (isBlank()) return this
+    return try {
+        val json = JsonParser.parseString(this)
+        if (json.isJsonObject && json.asJsonObject[key]?.let {
+                it.isJsonPrimitive && it.asString.isBlank()
+            } == true
+        ) {
+            json.asJsonObject.remove(key)
+            json.toString()
+        } else {
+            this
+        }
+    } catch (_: Exception) {
+        this
+    }
 }

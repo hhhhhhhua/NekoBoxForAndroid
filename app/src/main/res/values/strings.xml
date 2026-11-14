@@ -564,6 +564,9 @@
     <string name="allow_insecure_on_request_sum">Disable certificate checking when updating
         subscriptions</string>
     <string name="global_allow_insecure">Always allow insecure</string>
+    <string name="global_http_cus_hx">Global HTTP CONNECT suffix</string>
+    <string name="global_http_cus_hx_sum">Used by HTTP profiles whose cus_hx is empty:
+        CONNECT host:port@value</string>
     <string name="mux_preference">Mulitplex</string>
     <string name="padding">Padding</string>
     <string name="network_change_reset_connections">Reset outbound connections when network changes</string>
