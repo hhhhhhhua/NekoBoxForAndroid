@@ -97,7 +97,9 @@ NekoBoxForAndroid 构建改动备忘录
       ndk;25.0.8775105、cmdline-tools/latest
 - /home/Gold/go/bin/gomobile-matsuri    打补丁后重新编译的 gomobile
 - /home/Gold/go/bin/gobind-matsuri     由 libcore/init.sh 安装
-- /home/Gold/workspace/sing-box、libneko  由 buildScript/lib/core/get_source.sh 克隆，
-      固定提交：sing-box aed32ee、libneko 1c47a3a（go.mod 通过相对路径引用）
+- /home/Gold/workspace/sing、sing-box、libneko 由 buildScript/lib/core/get_source.sh 克隆，
+      固定提交：sing 6d9fb6b、sing-box 8858855f、libneko 1c47a3a（go.mod 通过相对路径引用）
+      sing 与 sing-box 取自已 fork 的 hhhhhhhua 仓库，地址与提交见
+      buildScript/lib/core/get_source_env.sh
 
 以上。
