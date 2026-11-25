@@ -1,0 +1,103 @@
+NekoBoxForAndroid 构建改动备忘录
+================================
+生成时间：2026-11-14
+项目路径：/home/Gold/workspace/nekobox
+基线版本：NekoBoxForAndroid 1.4.2（git 提交 5768494）
+
+说明：以下只列出我在本次“把项目跑起来”过程中 创建/修改 的文件（项目内）。
+      构建产物与拉取的资源单独标注。项目外的环境文件见文末附录。
+
+
+一、我修改过的源文件
+--------------------
+1. libcore/gomobile/cmd/gomobile/env.go
+   - 改动类型：修改（该文件所在的 libcore/gomobile/ 目录由 libcore/init.sh 从
+     https://github.com/MatsuriDayo/gomobile 克隆生成，属未跟踪文件）
+   - 改动内容：函数 archNDK() 中新增：
+         if runtime.GOOS == "linux" { arch = "x86_64"; break }
+     即 linux/arm64 主机也使用 NDK 的 linux-x86_64 预编译工具链。
+   - 原因：Android NDK 只提供 linux-x86_64 的 host 工具链；原代码在 arm64 Linux
+     上直接 panic: unsupported GOARCH: arm64。
+   - 运行方式：本机已启用 qemu-x86_64 binfmt，x86_64 的 clang 等工具可直接执行。
+   - 修改时间：2026-11-14 13:47
+   - 生效方式：在 libcore/gomobile/cmd/gomobile 下重新 go install，并把生成的
+     gomobile 覆盖为 ~/go/bin/gomobile-matsuri。
+
+
+二、我创建的文件（构建配置/资源/产物，均已被 .gitignore 忽略）
+------------------------------------------------------------
+2. local.properties
+   - 创建内容：
+         sdk.dir=/home/Gold/Android/Sdk
+         ndk.dir=/home/Gold/Android/Sdk/ndk/25.0.8775105
+   - 用途：告诉 Gradle/AGP 使用用户目录下安装的 SDK 和 NDK。
+   - 时间：2026-11-14 13:35
+
+3. app/src/main/assets/sing-box/geoip.db.xz
+   app/src/main/assets/sing-box/geoip.version.txt
+   app/src/main/assets/sing-box/geosite.db.xz
+   app/src/main/assets/sing-box/geosite.version.txt
+   - 创建方式：执行 bash buildScript/lib/assets.sh 自动下载（sing-geoip /
+     sing-geosite 最新 release）并 xz 压缩，非手工编辑。
+   - 版本：geoip 20261112，geosite 20261112220449
+   - 时间：2026-11-14 13:35
+
+4. app/libs/libcore.aar
+   - 创建方式：gomobile bind 生成的 libcore/libcore.aar 复制到 app/libs/。
+   - 我构建的版本：2026-11-14 13:59，arm64-v8a only，约 8.7MB。
+
+5. libcore/libcore.aar 和 libcore/libcore-sources.jar
+   - 创建方式：gomobile-matsuri bind 的输出产物。
+   - 我构建的版本：2026-11-14 13:59（同样在 14:40 被后续构建覆盖）。
+
+6. libcore/.build/
+   - 创建方式：gomobile bind 的 -cache 目录（Go 构建缓存），可删除，重建时自动生成。
+
+7. 构建缓存/输出目录（全部为自动生成，可安全删除）：
+   - .gradle/
+   - buildSrc/.gradle/、buildSrc/build/
+   - app/build/
+   - app/build/outputs/apk/oss/debug/NekoBox-1.4.2-arm64-v8a-debug.apk  （可用 APK）
+   - app/build/outputs/apk/{oss,fdroid,play,preview}/debug/*.apk
+   - 说明：只有 arm64-v8a APK 含 native 核心（其它 ABI 的 APK 可生成但无 libgoji.so）。
+
+8. libcore/gomobile/（整目录）
+   - 创建方式：libcore/init.sh 克隆 MatsuriDayo/gomobile 并安装工具链时生成。
+   - 其中唯一被我修改的文件是上面第 1 项的 env.go。
+
+四、我自己执行过的关键命令（复现用）
+----------------------------------
+  source ~/android-env.sh
+  cd /home/Gold/workspace/nekobox
+  bash buildScript/lib/assets.sh
+  cd libcore && GOBIND=gobind-matsuri CGO_ENABLED=1 \
+    gomobile-matsuri bind -v -androidapi 21 -cache "$(realpath .build)" -trimpath \
+    -ldflags='-s -w' -target=android/arm64 \
+    -tags='with_conntrack,with_gvisor,with_quic,with_wireguard,with_utls,with_clash_api' .
+  cp -f libcore.aar ../app/libs/
+  cd .. && ./gradlew app:assembleDebug
+
+  设备安装（调试包 applicationId 为 moe.nb4a.debug）：
+  adb -s 172.28.0.1:5555 install -r \
+    app/build/outputs/apk/oss/debug/NekoBox-1.4.2-arm64-v8a-debug.apk
+
+  注：设备原有 moe.nb4a.debug 是用另一把调试密钥签名的，不能覆盖安装。
+  已按用户确认先备份数据、卸载、再安装、恢复数据。备份文件：
+  /home/Gold/nb4a-backup-20261114-141046.tar（约 1.9MB，权限 600）。
+
+
+五、附录：项目外的环境改动（不在项目目录内）
+------------------------------------------
+- /home/Gold/android-env.sh
+    环境变量脚本（JAVA_HOME、ANDROID_HOME、NDK、PATH）。
+- /home/Gold/opt/jdk-17.0.21+9/        JDK 17（Temurin）
+- /home/Gold/opt/go/                   Go 1.23.6
+- /home/Gold/Android/Sdk/              Android SDK：
+      platform-tools 37.0.1、platforms;android-35、build-tools;35.0.1、
+      ndk;25.0.8775105、cmdline-tools/latest
+- /home/Gold/go/bin/gomobile-matsuri    打补丁后重新编译的 gomobile
+- /home/Gold/go/bin/gobind-matsuri     由 libcore/init.sh 安装
+- /home/Gold/workspace/sing-box、libneko  由 buildScript/lib/core/get_source.sh 克隆，
+      固定提交：sing-box aed32ee、libneko 1c47a3a（go.mod 通过相对路径引用）
+
+以上。
